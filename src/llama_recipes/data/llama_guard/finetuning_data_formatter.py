@@ -20,11 +20,6 @@ class Guidelines:
     category_code_prefix: str = "O"
 
 
-class ExplanationPosition(Enum):
-    BEFORE_DECISION = 0
-    AFTER_DECISION = 1
-
-
 @dataclass
 class LlamaGuardPromptConfigs:
     instructions_format_string: str
@@ -35,7 +30,6 @@ class LlamaGuardPromptConfigs:
 @dataclass
 class LlamaGuardGenerationConfigs:
     should_list_violated_codes: bool
-    explanation_position: Optional[ExplanationPosition]
 
 
 @dataclass
@@ -44,9 +38,6 @@ class AugmentationConfigs:
     should_add_examples_with_dropped_violated_and_nonviolated_prompt_categories: bool = (
         False
     )
-    explanation_for_augmentation_with_dropped_violated_and_nonviolated_prompt_categories: Optional[
-        str
-    ] = None
 
 
 @dataclass
@@ -65,7 +56,6 @@ class TrainingExample:
     response: str
     violated_category_codes: List[str]
     label: Literal["safe", "unsafe"]
-    explanation: Optional[str] = None
 
 
 def create_formatted_finetuning_examples(
@@ -125,8 +115,6 @@ def _verify_formatter_configs(
     if (
         formatter_configs.augmentation_configs.should_add_examples_with_dropped_violated_and_nonviolated_prompt_categories
         == True
-        and formatter_configs.llama_guard_generation_configs.explanation_position
-        is not None
         and formatter_configs.augmentation_configs.explanation_for_augmentation_with_dropped_violated_and_nonviolated_prompt_categories
         is None
     ):
@@ -163,7 +151,10 @@ def _create_formatted_finetuning_example(
         formatter_configs,
     )
 
-    return f"{llama_guard_prompt} {llama_guard_generation}"
+    retval = {}
+    retval["input"] = {llama_guard_prompt}
+    retval["output"] = {llama_guard_generation}
+    return retval
 
 
 def _create_llama_guard_prompt(
@@ -252,15 +243,6 @@ def _create_llama_guard_generation(
 
         to_return += "\n"
         to_return += ",".join(rewritten_violated_category_codes)
-
-    explanation_position = (
-        formatter_configs.llama_guard_generation_configs.explanation_position
-    )
-
-    if explanation_position == ExplanationPosition.BEFORE_DECISION:
-        to_return = f"Explanation: {training_example.explanation}\n{to_return}"
-    elif explanation_position == ExplanationPosition.AFTER_DECISION:
-        to_return = f"{to_return}\nExplanation: {training_example.explanation}"
 
     return to_return
 
@@ -398,9 +380,6 @@ def _maybe_add_example_with_dropped_violated_and_nonviolated_prompt_categories(
     training_example_copy = copy.deepcopy(training_example)
     training_example_copy.label = "safe"
     training_example_copy.violated_category_codes = []
-    training_example_copy.explanation = (
-        formatter_configs.augmentation_configs.explanation_for_augmentation_with_dropped_violated_and_nonviolated_prompt_categories
-    )
 
     formatted_examples_being_built.append(
         _create_formatted_finetuning_example(

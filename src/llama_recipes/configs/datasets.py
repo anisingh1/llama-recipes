@@ -23,9 +23,19 @@ class alpaca_dataset:
     dataset: str = "alpaca_dataset"
     train_split: str = "train"
     test_split: str = "val"
-    data_path: str = "src/llama_recipes/datasets/alpaca_data.json"
+    data_path: str = "data/alpaca_data.json"
     
-    
+
+@dataclass
+class llamaguard_dataset:
+    dataset: str = "llamaguard_dataset"
+    context_size: int = 4096
+    train_split: str = "train"
+    test_split: str = "val"
+    train_data_path: str = "data/llamaguard_train_data.csv"
+    val_data_path: str = "data/llamaguard_val_data.csv"
+
+
 @dataclass
 class custom_dataset:
     dataset: str = "custom_dataset"
