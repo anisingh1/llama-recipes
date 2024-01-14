@@ -131,7 +131,7 @@ def intializeConfig():
 def prepareData(dataset, formatter_configs):
     training_examples = []
     for data in dataset:
-        category = data["category"].split(",")
+        category = data["llamaguard reasons"].split(",")
         category_codes = []
         for item in category:
             category_codes.append(categories[item]["code"])
@@ -141,7 +141,7 @@ def prepareData(dataset, formatter_configs):
                 prompt=data["text"],
                 response="N/A",
                 violated_category_codes=category,
-                label=data["output"]
+                label=data["llamaguard offensive"]
             )
         )
 
@@ -176,8 +176,6 @@ class LlamaguardDataset(Dataset):
             except Exception as e:
                 print("Loading of grammar dataset failed! Please see recipes/ft_datasets/grammar_dataset/grammar_dataset_process.ipynb for details on how to download the dataset.")
                 raise e
-        elif self.data_file_path.endswith('json'):
-            dataset: list[dict[str, str]] = json.load(open(self.data_file_path))
         else:
             raise ("Unknown data file format")
         

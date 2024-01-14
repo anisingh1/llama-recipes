@@ -32,8 +32,8 @@ class llamaguard_dataset:
     context_size: int = 4096
     train_split: str = "train"
     test_split: str = "val"
-    train_data_path: str = "data/llamaguard_train_data.csv"
-    val_data_path: str = "data/llamaguard_val_data.csv"
+    train_data_path: str = "data/output_4076.csv"
+    val_data_path: str = "data/output_8.csv"
 
 
 @dataclass
