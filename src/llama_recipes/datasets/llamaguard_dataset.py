@@ -149,8 +149,7 @@ def prepareData(dataset, formatter_configs):
     formatted_examples = create_formatted_finetuning_examples(
         training_examples, formatter_configs)
 
-    # Print the formatted examples
-    print(formatted_examples)
+    return formatted_examples
 
 
 class LlamaguardDataset(Dataset):
