@@ -11,7 +11,7 @@ class train_config:
     low_cpu_fsdp: bool=False
     run_validation: bool=True
     batch_size_training: int=4
-    batching_strategy: str="packing" #alternative: padding
+    batching_strategy: str="padding" #padding, packing
     context_length: int=4096
     gradient_accumulation_steps: int=1
     gradient_clipping: bool = False
@@ -22,8 +22,8 @@ class train_config:
     weight_decay: float=0.0
     gamma: float= 0.85
     seed: int=42
-    use_fp16: bool=False
-    mixed_precision: bool=True
+    use_fp16: bool=True
+    mixed_precision: bool=False
     val_batch_size: int=1
     dataset = "llamaguard_dataset"
     peft_method: str = "lora" # None , llama_adapter, prefix

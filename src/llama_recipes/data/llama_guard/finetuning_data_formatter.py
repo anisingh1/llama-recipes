@@ -83,7 +83,7 @@ def create_formatted_finetuning_examples(
     in the llama guard prompts of the augmented examples. We occasionally need to
     convert between the two.
     """
-    _verify_formatter_configs(formatter_configs)
+    # _verify_formatter_configs(formatter_configs)
 
     random.seed(formatter_configs.random_seed)
 
@@ -109,22 +109,20 @@ def create_formatted_finetuning_examples(
     return to_return
 
 
-def _verify_formatter_configs(
-    formatter_configs: FormatterConfigs,
-) -> None:
-    if (
-        formatter_configs.augmentation_configs.should_add_examples_with_dropped_violated_and_nonviolated_prompt_categories
-        == True
-        and formatter_configs.augmentation_configs.explanation_for_augmentation_with_dropped_violated_and_nonviolated_prompt_categories
-        is None
-    ):
-        raise ValueError(
-            """The configuration setup requires you to specify
- explanation_for_augmentation_with_dropped_violated_and_nonviolated_prompt_categories.
- This is an explanation that we use for dynamically-created safe augmentation examples.
- Consider something like 'This interaction is safe because any riskiness it contains
- is related to violation categories that we're explicitly not trying to detect here.'"""
-        )
+# def _verify_formatter_configs(
+#     formatter_configs: FormatterConfigs,
+# ) -> None:
+#     if (
+#         formatter_configs.augmentation_configs.should_add_examples_with_dropped_violated_and_nonviolated_prompt_categories
+#         == True
+#     ):
+#         raise ValueError(
+#             """The configuration setup requires you to specify
+#  explanation_for_augmentation_with_dropped_violated_and_nonviolated_prompt_categories.
+#  This is an explanation that we use for dynamically-created safe augmentation examples.
+#  Consider something like 'This interaction is safe because any riskiness it contains
+#  is related to violation categories that we're explicitly not trying to detect here.'"""
+#         )
 
 
 def _create_formatted_finetuning_example(
@@ -152,8 +150,8 @@ def _create_formatted_finetuning_example(
     )
 
     retval = {}
-    retval["input"] = {llama_guard_prompt}
-    retval["output"] = {llama_guard_generation}
+    retval["input"] = llama_guard_prompt
+    retval["output"] = llama_guard_generation
     return retval
 
 

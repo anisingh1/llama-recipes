@@ -5,7 +5,7 @@ loralib
 bitsandbytes
 black
 black[jupyter]
-datasets
+datasets==2.16.1
 fire
 peft
 transformers>=4.34.1
