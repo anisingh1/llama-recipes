@@ -97,7 +97,7 @@ Should
 
 def intializeConfig():
     llamaguard_categories = []
-    for key, value in categories:
+    for key, value in categories.items():
         llamaguard_categories.append(Category(name=key, description=value["description"]))
 
     guidelines = Guidelines(categories=llamaguard_categories, category_code_prefix="O")
@@ -173,7 +173,7 @@ class LlamaguardDataset(Dataset):
                     delimiter=",",
                 )[partition]
             except Exception as e:
-                print("Loading of grammar dataset failed! Please see recipes/ft_datasets/grammar_dataset/grammar_dataset_process.ipynb for details on how to download the dataset.")
+                print("Loading of llamaguard dataset failed!")
                 raise e
         else:
             raise ("Unknown data file format")

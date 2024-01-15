@@ -5,15 +5,13 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug Train",
+            "name": "Debug Training",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/src/finetuning.py",
+            "module": "torch.distributed.launch",
             "console": "integratedTerminal",
-            "justMyCode": true,
             "args": [
-                "--nnodes", "1",
-                "--nproc_per_node", "8"
+                "${workspaceFolder}/src/finetuning.py"
             ]
         }
     ]

@@ -1,0 +1,2 @@
+nvidia::cuda-nvcc
+python=3.11
