@@ -232,16 +232,3 @@ class LlamaguardDataset(Dataset):
             "labels": labels,
             "attention_mask": example_mask,
         }
-
-        # input = self.data[index]["input"]
-        # output = self.data[index]["output"]
-        # input_ids = self.tokenizer.encode(self.tokenizer.bos_token + input, add_special_tokens=False)
-        # label_ids = self.tokenizer.encode(output + self.tokenizer.eos_token, add_special_tokens=False)
-
-        # sample = {
-        #     "input_ids": input_ids + label_ids,
-        #     "attention_mask": [1] * len(input_ids + label_ids),
-        #     "labels": [-100] * len(input_ids) + label_ids
-        # }
-
-        # return sample
