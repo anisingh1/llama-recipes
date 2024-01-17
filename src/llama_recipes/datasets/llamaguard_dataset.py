@@ -160,12 +160,7 @@ def prepareData(dataset, formatter_configs):
 
 
 class LlamaguardDataset(Dataset):
-    def __init__(
-            self, 
-            dataset_config: Type[llamaguard_dataset], 
-            tokenizer: LlamaTokenizer, 
-            partition: str = "train"
-        ) -> None:
+    def __init__(self, dataset_config, tokenizer, partition="train"):
         self.generator_config = intializeConfig()
         self.data_file_path: str = (
             dataset_config.train_data_path if partition == "train" else dataset_config.val_data_path
@@ -188,47 +183,60 @@ class LlamaguardDataset(Dataset):
         self.data = prepareData(dataset, self.generator_config)
 
 
-    def __len__(self) -> int:
+    def __len__(self):
         return len(self.data)
 
 
-    def __getitem__(self, index) -> dict[str, torch.Tensor]:
-        IGNORE_INDEX = -100  # The default setting in CrossEntropyLoss
+    def __getitem__(self, index):
+        # IGNORE_INDEX = -100  # The default setting in CrossEntropyLoss
 
-        data: dict[str, str] = self.data[index]
-        example: str = data["input"] + data["output"]
-        encoded_prompt: torch.Tensor = torch.tensor(
-            self.tokenizer.encode(data["input"]), dtype=torch.int64
-        )
-        encoded_example: list[int] = self.tokenizer.encode(example)
-        encoded_example.append(self.tokenizer.eos_token_id)
-        encoded_tensor_example: torch.Tensor = torch.tensor(encoded_example, dtype=torch.int64)
+        # data: dict[str, str] = self.data[index]
+        # example: str = data["input"] + data["output"]
+        # encoded_prompt: torch.Tensor = torch.tensor(
+        #     self.tokenizer.encode(data["input"]), dtype=torch.int64
+        # )
+        # encoded_example: list[int] = self.tokenizer.encode(example)
+        # encoded_example.append(self.tokenizer.eos_token_id)
+        # encoded_tensor_example: torch.Tensor = torch.tensor(encoded_example, dtype=torch.int64)
 
-        padding: int = self.max_words - encoded_tensor_example.shape[0]
-        if padding > 0:
-            encoded_tensor_example = torch.cat((encoded_tensor_example, torch.zeros(padding, dtype=torch.int64) - 1))
-        elif padding < 0:
-            encoded_tensor_example = encoded_tensor_example[: self.max_words]
+        # padding: int = self.max_words - encoded_tensor_example.shape[0]
+        # if padding > 0:
+        #     encoded_tensor_example = torch.cat((encoded_tensor_example, torch.zeros(padding, dtype=torch.int64) - 1))
+        # elif padding < 0:
+        #     encoded_tensor_example = encoded_tensor_example[: self.max_words]
 
-        labels = copy.deepcopy(encoded_tensor_example)
-        labels[: len(encoded_prompt)] = -1
-        example_mask = encoded_tensor_example.ge(0)
-        label_mask = labels.ge(0)
+        # labels = copy.deepcopy(encoded_tensor_example)
+        # labels[: len(encoded_prompt)] = -1
+        # example_mask = encoded_tensor_example.ge(0)
+        # label_mask = labels.ge(0)
 
-        if torch.all(label_mask == 0):
-            random_index: int = np.random.randint(0, len(self.data))
-            self.__getitem__(random_index)
+        # if torch.all(label_mask == 0):
+        #     random_index: int = np.random.randint(0, len(self.data))
+        #     self.__getitem__(random_index)
 
-        # ~example_mask -> paddingの部分を 0 で埋める
-        encoded_tensor_example[~example_mask] = 0
-        # ~label_mask -> prompt の部分を ignore_index で埋める
-        labels[~label_mask] = IGNORE_INDEX
+        # # ~example_mask -> paddingの部分を 0 で埋める
+        # encoded_tensor_example[~example_mask] = 0
+        # # ~label_mask -> prompt の部分を ignore_index で埋める
+        # labels[~label_mask] = IGNORE_INDEX
 
-        example_mask = example_mask.float()
-        label_mask = label_mask.float()
+        # example_mask = example_mask.float()
+        # label_mask = label_mask.float()
 
-        return {
-            "input_ids": encoded_tensor_example,
-            "labels": labels,
-            "attention_mask": example_mask,
+        # return {
+        #     "input_ids": encoded_tensor_example,
+        #     "labels": labels,
+        #     "attention_mask": example_mask,
+        # }
+
+        input = self.data[index]["input"]
+        output = self.data[index]["output"]
+        input_ids = self.tokenizer.encode(self.tokenizer.bos_token + input, add_special_tokens=False)
+        label_ids = self.tokenizer.encode(output + self.tokenizer.eos_token, add_special_tokens=False)
+
+        sample = {
+            "input_ids": input_ids + label_ids,
+            "attention_mask": [1] * len(input_ids + label_ids),
+            "labels": [-100] * len(input_ids) + label_ids
         }
+
+        return sample

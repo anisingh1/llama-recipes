@@ -29,9 +29,9 @@ class alpaca_dataset:
 @dataclass
 class llamaguard_dataset:
     dataset: str = "llamaguard_dataset"
-    context_size: int = 4096
     train_split: str = "train"
-    test_split: str = "val"
+    test_split: str = "validation"
+    context_size: int = 4096
     train_data_path: str = "data/output_4076.csv"
     val_data_path: str = "data/output_8.csv"
 
