@@ -96,8 +96,8 @@ class AzureSaftyChecker(object):
             from azure.ai.contentsafety import ContentSafetyClient
             from azure.core.credentials import AzureKeyCredential
 
-            key = os.environ["CONTENT_SAFETY_KEY"]
-            endpoint = os.environ["CONTENT_SAFETY_ENDPOINT"]
+            key = os.environ["AZURE_CONTENT_SAFETY_KEY"]
+            endpoint = os.environ["AZURE_CONTENT_SAFETY_ENDPOINT"]
         except ImportError:
             raise Exception(
                 "Could not import required package azure-ai-contentsafety. Install with: pip install azure-ai-contentsafety"
