@@ -104,7 +104,7 @@ class AzureSaftyChecker(object):
             )
         except KeyError:
             raise Exception(
-                "Environment variables not set. Please set CONTENT_SAFETY_KEY and CONTENT_SAFETY_ENDPOINT."
+                "Environment variables not set. Please set AZURE_CONTENT_SAFETY_KEY and AZURE_CONTENT_SAFETY_ENDPOINT."
             )
 
         self.client = ContentSafetyClient(endpoint, AzureKeyCredential(key))
