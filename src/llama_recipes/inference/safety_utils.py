@@ -139,6 +139,7 @@ class AzureSaftyChecker(object):
         self_harm_result = next(item for item in response.categories_analysis if item.category == TextCategory.SELF_HARM)
         sexual_result = next(item for item in response.categories_analysis if item.category == TextCategory.SEXUAL)
         violence_result = next(item for item in response.categories_analysis if item.category == TextCategory.VIOLENCE)
+        severities = [violence_result.severity, self_harm_result.severity, sexual_result.severity, hate_result.severity]
 
         is_safe = False
         if (hate_result.severity + self_harm_result.severity + sexual_result.severity + violence_result.severity) == 0:
