@@ -13,6 +13,7 @@ class AgentType(Enum):
     AGENT = "Agent"
     USER = "User"
 
+
 # Class for performing safety checks using AuditNLG library
 class AuditNLGSensitiveTopics(object):
     def __init__(self):
@@ -27,7 +28,6 @@ class AuditNLGSensitiveTopics(object):
             
 
         data = [{"output": output_text}]
-
         result = safety_scores(data=data, method="sensitive_topics")
         scores = result[1]["all_scores"][0]
         is_safe = scores["pred_class"] == "none"
@@ -65,7 +65,7 @@ class SalesforceSafetyChecker(object):
                 output_scores=True,
                 return_dict_in_generate=True,
                 max_new_tokens=20,
-                )
+            )
         
         is_safe = tokenizer.decode(outputs.sequences[0], skip_special_tokens=True).split(" ")[0] == "safe"    
             
@@ -113,7 +113,6 @@ class AzureSaftyChecker(object):
         from azure.core.exceptions import HttpResponseError
         from azure.ai.contentsafety.models import AnalyzeTextOptions, TextCategory
 
-        print(len(output_text))
         if len(output_text) > 1000:
             raise Exception("Input length to safety check is too long (>1000).")
 
@@ -125,7 +124,6 @@ class AzureSaftyChecker(object):
         ]
 
         request = AnalyzeTextOptions(text=output_text, categories=categories)
-
         try:
             response = self.client.analyze_text(request)
         except HttpResponseError as e:
@@ -137,22 +135,23 @@ class AzureSaftyChecker(object):
             print(e)
             raise e
 
-        levels = {0: "Safe", 2: "Low", 4: "Medium", 6: "High"}
+        hate_result = next(item for item in response.categories_analysis if item.category == TextCategory.HATE)
+        self_harm_result = next(item for item in response.categories_analysis if item.category == TextCategory.SELF_HARM)
+        sexual_result = next(item for item in response.categories_analysis if item.category == TextCategory.SEXUAL)
+        violence_result = next(item for item in response.categories_analysis if item.category == TextCategory.VIOLENCE)
 
-        severities = [
-            getattr(response, c.name.lower() + "_result").severity for c in categories
-        ]
-
-        DEFAULT_LEVELS = [0, 0, 0, 0]
-
-        is_safe = all([s <= l for s, l in zip(severities, DEFAULT_LEVELS)])
+        is_safe = False
+        if (hate_result.severity + self_harm_result.severity + sexual_result.severity + violence_result.severity) == 0:
+            is_safe = True
 
         report = ""
+        levels = {0: "Safe", 2: "Low", 4: "Medium", 6: "High"}
         if not is_safe:
             report = "|" + "|".join(f"{c.name:^10}" for c in categories) + "|\n"
             report += "|" + "|".join(f"{levels[s]:^10}" for s in severities) + "|\n"
 
-        return "Azure Content Saftey API", is_safe, report
+        return "Azure Content Safety", is_safe, report
+
 
 class LlamaGuardSafetyChecker(object):
 
@@ -193,10 +192,13 @@ class LlamaGuardSafetyChecker(object):
         output = self.model.generate(input_ids=input_ids, max_new_tokens=100, pad_token_id=0)
         result = self.tokenizer.decode(output[0][prompt_len:], skip_special_tokens=True)
         
-        splitted_result = result.split("\n")[0];
-        is_safe = splitted_result == "safe"    
+        splitted_result = result.split("\n")
+        is_safe = splitted_result[0] == "safe"    
 
-        report = result
+        if len(splitted_result) == 1:
+            report = ""
+        else:
+            report = splitted_result[1]
         
         return "Llama Guard", is_safe, report
         

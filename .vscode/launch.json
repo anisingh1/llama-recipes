@@ -11,8 +11,10 @@
             "cwd": "${workspaceFolder}",
             "program": "torchrun",
             "args": [
-                "--nnodes", "1",
-                "--nproc_per_node", "8",
+                "--nnodes",
+                "1",
+                "--nproc_per_node",
+                "8",
                 "src/finetuning.py"
             ]
         },
@@ -23,9 +25,12 @@
             "console": "integratedTerminal",
             "program": "${workspaceFolder}/src/merge_lora_weights.py",
             "args": [
-                "--base_model", "../models/LlamaGuard-7b",
-                "--peft_model", "../models/output",
-                "--output_dir", "../models/merged"
+                "--base_model",
+                "../models/LlamaGuard-7b",
+                "--peft_model",
+                "../models/output",
+                "--output_dir",
+                "../models/merged"
             ]
         },
         {

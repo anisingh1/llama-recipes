@@ -14,3 +14,6 @@ py7zr
 scipy
 optimum
 matplotlib
+auditnlg
+vllm
+azure-ai-contentsafety
