@@ -9,11 +9,6 @@ from string import Template
 from enum import Enum
 
 
-class AgentType(Enum):
-    AGENT = "Agent"
-    USER = "User"
-
-
 # Class for performing safety checks using AuditNLG library
 class AuditNLGSensitiveTopics(object):
     def __init__(self):
@@ -33,10 +28,14 @@ class AuditNLGSensitiveTopics(object):
         is_safe = scores["pred_class"] == "none"
         report = ""
         if not is_safe:
-            report += f"Predicted class: {scores['pred_class']}\n"
-            report += "|" + "|".join(f"{n:^10}" for n in [list(k.keys())[0] for k in scores["class_scores"]]) + "|\n"
-            report += "|" + "|".join(f"{n:^10.5}" for n in [list(k.values())[0] for k in scores["class_scores"]]) + "|\n"
-        return "Sensitive Topics", is_safe, report
+            categories = []
+            for item in scores["class_scores"]:
+                for key, value in item.items():
+                    if value >= 0.5:
+                        categories.append(key)
+            report = " | ".join(categories)
+
+        return "AuditNLG", is_safe, report
     
     
 class SalesforceSafetyChecker(object):
@@ -77,9 +76,13 @@ class SalesforceSafetyChecker(object):
             for k, i in zip(keys, range(3,20,2)):
                 scores[k] = round(outputs.scores[i][0,true_false_ids].softmax(dim=0)[0].item(), 5)
             
-            report += "|" + "|".join(f"{n:^10}" for n in scores.keys()) + "|\n"
-            report += "|" + "|".join(f"{n:^10}" for n in scores.values()) + "|\n"
-        return "Salesforce Content Safety Flan T5 Base", is_safe, report
+            categories = []
+            for key, value in scores.items():
+                if value >= 0.5:
+                    categories.append(key)
+            report = " | ".join(categories)
+
+        return "Salesforce Content Safety", is_safe, report
         
 
     def get_total_length(self, data):
@@ -139,18 +142,18 @@ class AzureSaftyChecker(object):
         self_harm_result = next(item for item in response.categories_analysis if item.category == TextCategory.SELF_HARM)
         sexual_result = next(item for item in response.categories_analysis if item.category == TextCategory.SEXUAL)
         violence_result = next(item for item in response.categories_analysis if item.category == TextCategory.VIOLENCE)
-        severities = [violence_result.severity, self_harm_result.severity, sexual_result.severity, hate_result.severity]
-
-        is_safe = False
-        if (hate_result.severity + self_harm_result.severity + sexual_result.severity + violence_result.severity) == 0:
-            is_safe = True
 
         report = ""
-        levels = {0: "Safe", 2: "Low", 4: "Medium", 6: "High"}
-        if not is_safe:
-            report = "|" + "|".join(f"{c.name:^10}" for c in categories) + "|\n"
-            report += "|" + "|".join(f"{levels[s]:^10}" for s in severities) + "|\n"
+        if hate_result.severity > 0:
+            report += hate_result.category
+        if self_harm_result.severity > 0:
+            report += self_harm_result.category
+        if sexual_result.severity > 0:
+            report += sexual_result.category
+        if violence_result.severity > 0:
+            report += violence_result.category
 
+        is_safe = len(report) == 0 
         return "Azure Content Safety", is_safe, report
 
 
@@ -167,11 +170,11 @@ class LlamaGuardSafetyChecker(object):
 
     def __call__(self, output_text, **kwargs):
         
-        agent_type = kwargs.get('agent_type', AgentType.USER)
+        agent_type = kwargs.get('agent_type', "User")
         user_prompt = kwargs.get('user_prompt', "")
 
         model_prompt = output_text.strip()
-        if(agent_type == AgentType.AGENT):
+        if(agent_type == "Agent"):
             if user_prompt == "":
                 print("empty user prompt for agent check, returning unsafe")
                 return "Llama Guard", False, "Missing user_prompt from Agent response check"
