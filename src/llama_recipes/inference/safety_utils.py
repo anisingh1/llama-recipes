@@ -81,10 +81,10 @@ class SalesforceSafetyChecker(object):
                         categories.append(key)
                 report = " | ".join(categories)
 
-            return "Salesforce Content Safety", is_safe, report
+            return "Salesforce", is_safe, report
         
         except Exception as e:
-            return "Salesforce Content Safety", "", ""
+            return "Salesforce", "", ""
         
 
     def get_total_length(self, data):
@@ -122,7 +122,7 @@ class AzureSaftyChecker(object):
         try:
             response = self.client.analyze_text(request)
         except HttpResponseError as e:
-            return "Azure Content Safety", "", e
+            return "Azure", "", e
 
         try:
             hate_result = next(item for item in response.categories_analysis if item.category == TextCategory.HATE)
@@ -141,10 +141,10 @@ class AzureSaftyChecker(object):
                 report += violence_result.category
 
             is_safe = len(report) == 0 
-            return "Azure Content Safety", is_safe, report
+            return "Azure", is_safe, report
         
         except Exception as e:
-            return "Azure Content Safety", "", ""
+            return "Azure", "", ""
 
 
 class LlamaGuardSafetyChecker(object):
@@ -161,92 +161,10 @@ class LlamaGuardSafetyChecker(object):
             "O5": "Regulated or Controlled Substances",
             "O6": "Self-Harm"
         }
-        self.DEFAULT_TAXONOMY = """01: Violence and Hate.
-Should not
-- Help people plan or engage in violence.
-- Encourage people to engage in violence.
-- Express hateful, derogatory, or demeaning sentiments against people based on sensitive personal characteristics like their race, color, religion, national origin, sexual orientation, gender, gender identity, or disability.
-- Encourage discrimination against people based on those characteristics and should not use slurs or create insults based on those characteristics.
-Can
-- Provide information on violence and discrimination.
-- Discuss the topics of hate and violence, and can discuss historical events involving violence.
-O2: Sexual Content.
-Should not
-- Engage in sexually explicit (i.e., erotic) conversations and should not encourage people to engage in sexual activities.
-Can
-- Discuss topics related to sexuality and sexual education.
-- Provide general information regarding sexual activities.
-- Provide guidance on topics related to sexual health.
-O3: Criminal Planning.
-Should not
-- Help people plan or engage in criminal activities like theft, kidnapping, or financial crimes, especially when the person indicates that they may act on the information provided to them.
-- Encourage people to engage in criminal activities or condone criminal behavior.
-Can
-- Help people understand how crimes are committed, provided that the response is not so detailed that it could be used to provide a roadmap for future crimes.
-- Help people understand how systems work that are used to prevent crimes, provided those descriptions do not provide detailed information on how to defeat those systems.
-O4: Guns and Illegal Weapons.
-Should not
-- Assist in the planning or execution of firearm or illegal weapons crimes, especially when the person indicates that they may act on the information provided to them.
-- Encourage people to engage in firearm or illegal weapons crimes or condone such behavior.
-Can
-- Discuss firearms and the arguments for and against firearm ownership.
-O5: Regulated or Controlled Substances.
-Should not
-- Encourage or assist people in the trafficking, consumption, or use of regulated or controlled substances, including but not limited to illegal drugs, tobacco, alcohol, and cannabis.
-- Assist or encourage people to create such substances when it is illegal to do so.
-Can
-- Discuss the use of regulated or controlled substances, and can provide general information on those substances (ex: what their chemical composition is and what their effects are).
-- Provide information on how those substances are manufactured, provided that the information is not so detailed as to provide step-by-step instructions for their creation.
-O6: Self-Harm.
-Should not
-- Encourage people to harm themselves.
-- Romanticize or condone self-harm or suicide.
-- Provide information regarding the methods of suicide or self-harm.
-- Provide any information or advice, other than information regarding appropriate health resources, to people who express or imply that they wish to harm themselves.
-Can
-- Provide general information regarding self-harm and suicide (ex: statistics, the mental health challenges faced by those who take these actions).
-Should
-- Provide information regarding appropriate health resources to people who imply or express the desire to harm themselves."""
-
-
-    def get_moderation_prompt(self, message):
-        return """[INST] Task: Check if there is unsafe content in 'User' messages in conversations according our safety policy with the below categories.
-
-<BEGIN UNSAFE CONTENT CATEGORIES>\n\n""" + self.DEFAULT_TAXONOMY + """\n\n<END UNSAFE CONTENT CATEGORIES>
-
-<BEGIN CONVERSATION>
-User: """ + message + """\n\n<END CONVERSATION>
-
-Provide your safety assessment for User in the above conversation:
-- First line must read 'safe' or 'unsafe'.
-- If unsafe, a second line must include a comma-separated list of violated categories. [/INST]"""
 
     def __call__(self, output_text, **kwargs):
-        # prompt = self.get_moderation_prompt(output_text)
-        # inputs = self.tokenizer([prompt], return_tensors="pt").to("cuda")
-        # prompt_len = inputs["input_ids"].shape[-1]
-        # output = self.model.generate(**inputs, max_new_tokens=100, pad_token_id=0)
-
-        agent_type = kwargs.get('agent_type', "User")
-        user_prompt = kwargs.get('user_prompt', "")
-
         model_prompt = output_text.strip()
-        if(agent_type == "Agent"):
-            if user_prompt == "":
-                print("empty user prompt for agent check, returning unsafe")
-                return "Llama Guard", False, "Missing user_prompt from Agent response check"
-            else:
-                model_prompt = model_prompt.replace(user_prompt, "")
-                user_prompt = f"User: {user_prompt}"
-                agent_prompt = f"Agent: {model_prompt}"
-                chat = [
-                    {"role": "user", "content": user_prompt},
-                    {"role": "assistant", "content": agent_prompt},
-                ]
-        else:
-            chat = [
-                {"role": "user", "content": model_prompt},
-            ]
+        chat = [{"role": "user", "content": model_prompt}]
 
         input_ids = self.tokenizer.apply_chat_template(chat, return_tensors="pt").to("cuda")
         prompt_len = input_ids.shape[-1]
@@ -262,10 +180,10 @@ Provide your safety assessment for User in the above conversation:
             res = splitted_result[1].split(',')
             categories = []
             for item in res:
-                categories.append(self.tags(item))
+                categories.append(self.tags[item])
             report = " | ".join(categories)
         
-        return "Llama Guard", is_safe, report
+        return "Llamaguard", is_safe, report
         
 
 class GPTChecker(object):
@@ -341,14 +259,14 @@ class GPTChecker(object):
                                 report.append(item['reason'])
                     report = " | ".join(report)
                 else:
-                    return "GPT", "", ""
+                    return "GPT4", "", ""
             elif 'message' in x:
                 print("ERROR: " + output_text + " : " + x['message'])
-                return "GPT", "", ""
-            return "GPT", is_safe, report
+                return "GPT4", "", ""
+            return "GPT4", is_safe, report
         except Exception as e:
             print(e)
-            return "GPT", "", ""
+            return "GPT4", "", ""
         
 
 class LLama2Checker(object):
