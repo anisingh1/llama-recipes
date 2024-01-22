@@ -280,6 +280,7 @@ class LLama2Checker(object):
             "Accept": "application/json",
         }
         self.endpoint = os.environ["LLAMA2_ENDPOINT"]
+        self.model = os.environ["LLAMA2_MODEL"]
 
 
     def getMessage(self, text):
@@ -297,7 +298,7 @@ class LLama2Checker(object):
             'top_p': 0.95,
             'frequency_penalty': 0,
             'presence_penalty': 0,
-            'model': './model/llama2_70b_chat'
+            'model': self.model
         }
         return obj
 
