@@ -34,6 +34,7 @@ class AuditNLGSensitiveTopics(object):
 
             return "AuditNLG", is_safe, report
         except Exception as e:
+            print(e)
             return "AuditNLG", "", ""
     
     
@@ -84,6 +85,7 @@ class SalesforceSafetyChecker(object):
             return "Salesforce", is_safe, report
         
         except Exception as e:
+            print(e)
             return "Salesforce", "", ""
         
 
@@ -144,6 +146,7 @@ class AzureSaftyChecker(object):
             return "Azure", is_safe, report
         
         except Exception as e:
+            print(e)
             return "Azure", "", ""
 
 
@@ -330,7 +333,6 @@ class LLama2Checker(object):
 # Function to load the PeftModel for performance optimization
 # Function to determine which safety checker to use based on the options selected
 def get_safety_checker(enable_azure_content_safety,
-                       enable_sensitive_topics,
                        enable_salesforce_content_safety,
                        enable_llamaguard_content_safety,
                        enable_gpt_safety,
@@ -338,8 +340,6 @@ def get_safety_checker(enable_azure_content_safety,
     safety_checker = []
     if enable_azure_content_safety:
         safety_checker.append(AzureSaftyChecker())
-    if enable_sensitive_topics:
-        safety_checker.append(AuditNLGSensitiveTopics())
     if enable_salesforce_content_safety:
         safety_checker.append(SalesforceSafetyChecker())
     if enable_llamaguard_content_safety:
