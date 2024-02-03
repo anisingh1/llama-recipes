@@ -5,7 +5,8 @@
 
 from torch.utils.data import Dataset
 from transformers import LlamaTokenizer
-from datasets import load_dataset
+from datasets import Dataset
+import pandas as pd
 from llama_recipes.data.llama_guard.finetuning_data_formatter import TrainingExample, Guidelines, Category, LlamaGuardPromptConfigs, LlamaGuardGenerationConfigs, AugmentationConfigs, FormatterConfigs, create_formatted_finetuning_examples
 
 
@@ -126,14 +127,20 @@ def prepareData(dataset, formatter_configs):
     for data in dataset:
         label = 'safe'
         category_codes = []
-        if data["llamaguard offensive"] == True:
+        if data["Manual"] == False:
             label = 'unsafe'
-            if data["llamaguard reasons"] != None:
-                category = str(data["llamaguard reasons"]).split("|")
-                for item in category:
-                    item = item.strip()
-                    category_codes.append(categories[item]["code"])
-            else:
+            category = []
+            if data["Category1"] != None:
+                category.append(str(data["Category1"]))
+            if data["Category2"] != None:
+                category.append(str(data["Category2"]))
+            if data["Category3"] != None:
+                category.append(str(data["Category3"]))
+            for item in category:
+                item = item.strip()
+                category_codes.append(categories[item]["code"])
+
+            if len(category) == 0:
                 print("Llamaguard data error: category not found for: " + data["text"])
 
         training_examples.append(
@@ -160,13 +167,15 @@ class LlamaguardDataset(Dataset):
         )
         self.max_words: int = dataset_config.context_size
         self.tokenizer: LlamaTokenizer = tokenizer
-        if self.data_file_path.endswith('csv'):
+        if self.data_file_path.endswith('xlsx'):
             try:
-                dataset = load_dataset(
-                    "csv",
-                    data_files={partition: [self.data_file_path]},
-                    delimiter=",",
-                )[partition]
+                df = pd.read_excel(self.data_file_path, header=0)
+                dataset = Dataset.from_pandas(df)
+                # dataset = load_dataset(
+                #     "csv",
+                #     data_files={partition: [self.data_file_path]},
+                #     delimiter=",",
+                # )[partition]
             except Exception as e:
                 print("Loading of llamaguard dataset failed!")
                 raise e
