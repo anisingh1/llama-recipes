@@ -5,7 +5,7 @@
 
 from torch.utils.data import Dataset
 from transformers import LlamaTokenizer
-from datasets import Dataset
+import datasets
 import pandas as pd
 from llama_recipes.data.llama_guard.finetuning_data_formatter import TrainingExample, Guidelines, Category, LlamaGuardPromptConfigs, LlamaGuardGenerationConfigs, AugmentationConfigs, FormatterConfigs, create_formatted_finetuning_examples
 
@@ -125,9 +125,13 @@ def intializeConfig():
 def prepareData(dataset, formatter_configs):
     training_examples = []
     for data in dataset:
+        includeInTraining = False
         label = 'safe'
         category_codes = []
-        if data["Manual"] == False:
+        if data["Manual"] == True or data["Manual"] == 1:
+            label = 'safe'
+            includeInTraining = True
+        elif data["Manual"] == False or data["Manual"] == 0:
             label = 'unsafe'
             category = []
             if data["Category1"] != None:
@@ -136,21 +140,29 @@ def prepareData(dataset, formatter_configs):
                 category.append(str(data["Category2"]))
             if data["Category3"] != None:
                 category.append(str(data["Category3"]))
+                
             for item in category:
-                item = item.strip()
-                category_codes.append(categories[item]["code"])
+                try:
+                    item = item.strip()
+                    category_codes.append(categories[item]["code"])
+                except Exception as e:
+                    pass
 
-            if len(category) == 0:
-                print("Llamaguard data error: category not found for: " + data["text"])
+            if len(category_codes) == 0:
+                includeInTraining = False
+                print("Llamaguard data error: category not found for: " + data["Prompt"])
+            else:
+                includeInTraining = True
 
-        training_examples.append(
-            TrainingExample(
-                prompt=data["text"],
-                response="N/A",
-                violated_category_codes=category_codes,
-                label=label
+        if includeInTraining == True:
+            training_examples.append(
+                TrainingExample(
+                    prompt=data["Prompt"],
+                    response="N/A",
+                    violated_category_codes=category_codes,
+                    label=label
+                )
             )
-        )
 
     # Call the create_formatted_finetuning_examples function
     formatted_examples = create_formatted_finetuning_examples(
@@ -167,15 +179,20 @@ class LlamaguardDataset(Dataset):
         )
         self.max_words: int = dataset_config.context_size
         self.tokenizer: LlamaTokenizer = tokenizer
-        if self.data_file_path.endswith('xlsx'):
+        if self.data_file_path.endswith('xlsx') or self.data_file_path.endswith('xls'):
             try:
                 df = pd.read_excel(self.data_file_path, header=0)
-                dataset = Dataset.from_pandas(df)
-                # dataset = load_dataset(
-                #     "csv",
-                #     data_files={partition: [self.data_file_path]},
-                #     delimiter=",",
-                # )[partition]
+                dataset = datasets.Dataset.from_pandas(df)
+            except Exception as e:
+                print("Loading of llamaguard dataset failed!")
+                raise e
+        elif self.data_file_path.endswith('csv'):
+            try:
+                dataset = datasets.load_dataset(
+                    "csv",
+                    data_files={partition: [self.data_file_path]},
+                    delimiter=",",
+                )[partition]
             except Exception as e:
                 print("Loading of llamaguard dataset failed!")
                 raise e

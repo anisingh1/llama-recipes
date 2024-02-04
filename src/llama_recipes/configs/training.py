@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 @dataclass
 class train_config:
-    model_name: str = "/home/anisingh/models/LlamaGuard-7b"
+    model_name: str = "/home/anisingh/models/llamaguard"
     enable_fsdp: bool = True
     low_cpu_fsdp: bool = False
     run_validation: bool = True
@@ -16,7 +16,7 @@ class train_config:
     gradient_accumulation_steps: int = 1
     gradient_clipping: bool = False
     gradient_clipping_threshold: float = 1.0
-    num_epochs: int = 1
+    num_epochs: int = 2
     num_workers_dataloader: int = 1
     lr: float = 2e-4
     weight_decay: float = 0.0

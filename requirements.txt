@@ -17,3 +17,4 @@ matplotlib
 auditnlg
 vllm
 azure-ai-contentsafety
+openpyxl
