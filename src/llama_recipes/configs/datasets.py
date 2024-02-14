@@ -32,7 +32,7 @@ class llamaguard_dataset:
     train_split: str = "train"
     test_split: str = "val"
     context_size: int = 4096
-    train_data_path: str = "data/iter1.xlsx"
+    train_data_path: str = "data/train.xlsx"
     val_data_path: str = "data/val.xlsx"
 
 
