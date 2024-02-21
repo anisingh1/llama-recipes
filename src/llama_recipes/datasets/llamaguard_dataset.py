@@ -128,10 +128,10 @@ def prepareData(dataset, formatter_configs):
         includeInTraining = False
         label = 'safe'
         category_codes = []
-        if data["Manual"] == True or data["Manual"] == 1:
+        if data["Manual"] == True or data["Manual"] == 1 or str(data["Manual"]).lower() == 'true':
             label = 'safe'
             includeInTraining = True
-        elif data["Manual"] == False or data["Manual"] == 0:
+        elif data["Manual"] == False or data["Manual"] == 0 or str(data["Manual"]).lower() == 'false':
             label = 'unsafe'
             category = []
             if data["Category1"] != None:
@@ -181,7 +181,7 @@ class LlamaguardDataset(Dataset):
         self.tokenizer: LlamaTokenizer = tokenizer
         if self.data_file_path.endswith('xlsx') or self.data_file_path.endswith('xls'):
             try:
-                df = pd.read_excel(self.data_file_path, header=0)
+                df = pd.read_excel(self.data_file_path, header=0, dtype=str)
                 dataset = datasets.Dataset.from_pandas(df)
             except Exception as e:
                 print("Loading of llamaguard dataset failed!")
