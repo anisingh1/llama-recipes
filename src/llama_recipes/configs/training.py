@@ -18,7 +18,7 @@ class train_config:
     gradient_clipping_threshold: float = 1.0
     num_epochs: int = 10
     num_workers_dataloader: int = 1
-    lr: float = 1e-4
+    lr: float = 2e-4
     weight_decay: float = 0.0
     gamma: float = 0.85
     seed: int = 42
